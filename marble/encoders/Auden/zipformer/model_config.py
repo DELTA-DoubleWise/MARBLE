@@ -1,5 +1,6 @@
 import json
-from dataclasses import dataclass, field, asdict, is_dataclass
+from dataclasses import dataclass, field, asdict, is_dataclass, fields
+import json, warnings
 from typing import List, Optional
 import os
 import shutil
@@ -62,11 +63,25 @@ class ZipformerConfig:
         with open(json_path, "w") as f:
             json.dump(self.to_dict(), f, indent=4)
             
+    # @classmethod
+    # def from_pretrained(cls, path):
+    #     with open(f"{path}/config.json") as f:
+    #         data = json.load(f)
+    #     return cls(**data)
+    
     @classmethod
-    def from_pretrained(cls, path):
-        with open(f"{path}/config.json") as f:
-            data = json.load(f)
-        return cls(**data)
+    def from_pretrained(cls, path: str):
+        with open(os.path.join(path, "config.json")) as f:
+            raw_cfg = json.load(f)
+
+        valid = {f.name for f in fields(cls)}
+        cfg = {k: v for k, v in raw_cfg.items() if k in valid}
+
+        unknown = set(raw_cfg) - valid
+        if unknown:
+            warnings.warn(f"Ignoring unrecognized config keys: {unknown}")
+
+        return cls(**cfg)
 
     def save_config(self, output_dir: str):
         """

@@ -5,9 +5,12 @@ import torch
 
 from marble.core.base_encoder import BaseEncoder
 
-from marble.encoders.Auden.models.zipformer.model import ZipformerEncoderModel
-from marble.encoders.Auden.models.zipformer.model_config import ZipformerConfig
+from marble.encoders.Auden.zipformer.model import ZipformerEncoderModel
+from marble.encoders.Auden.zipformer.model_config import ZipformerConfig
 from marble.encoders.Auden.utils.checkpoint import load_model_params
+
+import pdb
+import os, json
 
 
 class Auden_Encoder(BaseEncoder):
@@ -26,6 +29,7 @@ class Auden_Encoder(BaseEncoder):
     def __init__(
         self,
         pre_trained_folder: Optional[str] = None,
+        checkpoint: Optional[str] = None,
         train_mode: str = "freeze",
         lora_r: int = 8,
         lora_alpha: int = 16,
@@ -34,6 +38,10 @@ class Auden_Encoder(BaseEncoder):
     ) -> None:
         super().__init__()
         self.sample_rate = self.SAMPLING_RATE
+        
+        config_file = os.path.join(pre_trained_folder, "config.json")
+        with open(config_file, "r") as f:
+            config_dict = json.load(f)
 
         if pre_trained_folder is not None:
             config = ZipformerConfig.from_pretrained(pre_trained_folder)
@@ -44,10 +52,12 @@ class Auden_Encoder(BaseEncoder):
         # enable feature extraction since external code provides waveforms
         self.model.feature_extractor = self.model.construct_feature_extractor()
 
+        init_modules = ['encoder_embed', 'encoder']
+
         if pre_trained_folder is not None:
-            ckpt = Path(pre_trained_folder) / "pretrained.pt"
+            ckpt = Path(pre_trained_folder) / checkpoint
             if ckpt.is_file():
-                load_model_params(self.model, ckpt)
+                load_model_params(self.model, ckpt, init_modules)
 
         if train_mode == "freeze":
             for p in self.model.parameters():

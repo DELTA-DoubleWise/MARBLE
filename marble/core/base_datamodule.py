@@ -186,12 +186,18 @@ class BaseAudioDataset(Dataset, ABC):
         audio_path = info["audio_path"]
 
         # 1. Load & preprocess the audio slice
-        waveform = self._load_and_preprocess(
-            path=audio_path,
-            slice_idx=slice_idx,
-            orig_sr=orig_sr,
-            orig_clip_frames=orig_clip_frames
-        )
+        try:
+            waveform = self._load_and_preprocess(
+                path=audio_path,
+                slice_idx=slice_idx,
+                orig_sr=orig_sr,
+                orig_clip_frames=orig_clip_frames
+            )
+            # waveform.shape == (self.channels, self.clip_len_target)
+
+        except Exception as e:
+            print(f"Error loading audio file: {audio_path}. Error: {e}")
+            raise e  # Re-raise the error after logging it
         # waveform.shape == (self.channels, self.clip_len_target)
 
         # 2. Delegate target/label creation to subclass

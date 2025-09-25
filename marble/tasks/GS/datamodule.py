@@ -141,6 +141,8 @@ class _GSAudioBase(Dataset):
             frame_offset=offset,
             num_frames=orig_clip
         )  # (orig_channels, orig_clip)
+        if waveform.numel() == 0:
+            raise ValueError(f"Empty waveform for {path}")
 
         # Channel alignment / downmixing
         if orig_channels >= self.channels:

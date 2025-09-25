@@ -13,6 +13,7 @@ from .encoder.subsampling import Conv2dSubsampling
 from .utils.scaling import ScheduledFloat
 from ..modeling_output import ZipformerEncoderOutput
 from .utils.padding import make_pad_mask
+import numpy as np
 
 
 class ZipformerEncoderModel(nn.Module):
@@ -131,6 +132,7 @@ class ZipformerEncoderModel(nn.Module):
             isinstance(x, (torch.Tensor, np.ndarray)) for x in input
         ):
             for i, data in enumerate(input):
+                data = data.squeeze(0)
                 if isinstance(data, np.ndarray):
                     data = torch.tensor(data, dtype=torch.float32)
                 if data.ndim != 1:
